@@ -10,31 +10,40 @@ console.log(container);
 input.addEventListener("input", _.debounce(onInputChange, 300));
 
 function onInputChange(e) {
-    const id = input.value
+    const name = e.target.value
 
-    if (!id.trim()) {
+    if (!name.trim()) {
     container.innerHTML = "";
     return;
 }
     
-    fetchCountryByName(id)
-
-    // check for 1 or more contry
-    // if (condition) {
-        
-    // }
+    fetchCountryByName(name)
     
 .then(data => {
-    console.log(data[0].name.official);
+
+    container.innerHTML = "";
+
+        // check for 1 or more contry
+
+
+    if (data.length > 1) {
+        renderCountryList(data);
+        return;
+    }
+
     renderCountryCard(data[0]);
 })
-.catch(error => {
-    console.log(error)
-})
+.catch(() => {
+    iziToast.error({
+        title: "Error",
+        message: "Country not found",
+        position: "topRight",
+    });
+});
 }
 
-function fetchCountryByName(id) {
-    return fetch(`${BASEURL}name/${id}`)
+function fetchCountryByName(name) {
+    return fetch(`${BASEURL}name/${name}`)
 
 .then(resp => {
 if (!resp.ok) {
@@ -49,17 +58,31 @@ function renderCountryCard(country) {
 
     const markup = `<div class="card">
             <div class="card-img-top">
-                <img src="${country.flags.svg}" alt="${country.name.official}">
+                <img src="${country.flags.svg}" alt="${country.name.common}">
             </div>
             <div class="card-body">
-                <h1 class="card-title">Ім'я: ${country.name.official}</h1>
+                <h1 class="card-title">Ім'я: ${country.name.common}</h1>
                 <p class="card-text">Capital: ${country.capital}</p>
                 <p class="card-text">Population: ${country.population}</p>
                 <p class="languages">Languages:</p>
-                <ul class="list-group"> ${languages}</ul>
+                <ul class="list-group">
+    ${Object.values(country.languages || {})
+        .map(lang => `<li>${lang}</li>`)
+        .join("")}
+</ul>
             </div>
         </div>`
         console.log(markup);
 
         container.innerHTML = markup
+}
+
+function renderCountryList(countries) {
+    const names = `<ul class="country-list-group">
+            ${countries
+                .map(country => `<li>${country.name.common}</li>`)
+                .join("")}
+        </ul>`
+
+    container.innerHTML = names;
 }
